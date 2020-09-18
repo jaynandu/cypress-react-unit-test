@@ -53,8 +53,7 @@ function printCypressJsonHelp(
     testFiles: '**/*.spec.{js,ts,jsx,tsx}',
   }
 
-  const relativeCypressJsonPath =
-    './' + path.relative(process.cwd(), cypressJsonPath)
+  const relativeCypressJsonPath = path.relative(process.cwd(), cypressJsonPath)
   const highlightedCode = highlight(JSON.stringify(resultObject, null, 2), {
     language: 'json',
   })
@@ -62,42 +61,55 @@ function printCypressJsonHelp(
   console.log(
     `\n${chalk.bold('1.')} Add this to the ${chalk.green(
       relativeCypressJsonPath,
-    )}`,
+    )}:`,
   )
 
   console.log(`\n${highlightedCode}\n`)
 }
 
-function printPluginHelper(
-  pluginCode: string,
-  cypressConfigPath: string,
-  cypressConfig: Record<string, string>,
-) {
-  const highlightedPluginCode = highlight(pluginCode, { language: 'js' })
-  const defaultPluginFilePath = path.resolve(
-    path.dirname(cypressConfigPath),
-    'cypress',
-    'plugins',
-    'index.js',
-  )
+function printSupportHelper(supportFilePath: string) {
+  const stepNumber = chalk.bold('2.')
+  const importCode = "import 'cypress-react-unit-test/support'"
+  const requireCode = "require('cypress-react-unit-test/support')"
 
-  const pluginsFilePath =
-    './' +
-    path.relative(
-      process.cwd(),
-      cypressConfig.pluginsFile || defaultPluginFilePath,
+  if (fs.existsSync(supportFilePath)) {
+    const fileContent = fs.readFileSync(supportFilePath, { encoding: 'utf-8' })
+    const relativeSupportPath = path.relative(process.cwd(), supportFilePath)
+
+    const importCodeWithPreferredStyle = fileContent.includes('import ')
+      ? importCode
+      : requireCode
+
+    console.log(
+      `\n${stepNumber} This to the ${chalk.green(relativeSupportPath)}:`,
+    )
+    console.log(
+      `\n${highlight(importCodeWithPreferredStyle, { language: 'js' })}\n`,
+    )
+  } else {
+    console.log(
+      `\n${stepNumber} This to the support file https://docs.cypress.io/guides/core-concepts/writing-and-organizing-tests.html#Support-file`,
     )
 
+    console.log(`\n${highlight(requireCode, { language: 'js' })}\n`)
+  }
+}
+
+function printPluginHelper(pluginCode: string, pluginsFilePath: string) {
+  const highlightedPluginCode = highlight(pluginCode, { language: 'js' })
+  const relativePluginsFilePath = path.relative(process.cwd(), pluginsFilePath)
+
   const stepTitle = fs.existsSync(pluginsFilePath)
-    ? `And this to the ${chalk.green(pluginsFilePath)}`
+    ? `And this to the ${chalk.green(relativePluginsFilePath)}`
     : `And this to your plugins file (https://docs.cypress.io/guides/tooling/plugins-guide.html)`
 
-  console.log(`${chalk.bold('2.')} ${stepTitle}:`)
+  console.log(`${chalk.bold('3.')} ${stepTitle}:`)
   console.log(`\n${highlightedPluginCode}\n`)
 }
 
 async function main() {
   const { config, cypressConfigPath } = await getCypressConfig()
+  const cypressProjectRoot = path.resolve(cypressConfigPath, '..')
   const [defaultTemplateName, defaultTemplate] = guessTemplateForUsedFramework()
 
   const templateChoices = Object.keys(templates).sort(key =>
@@ -125,9 +137,27 @@ async function main() {
   ])
 
   const userTemplate = templates[installationTemplate]
+  const pluginsFilePath = path.resolve(
+    cypressProjectRoot,
+    config.pluginsFile ?? './cypress/plugins/index.js',
+  )
+
+  const supportFilePath = path.resolve(
+    cypressProjectRoot,
+    config.supportFile ?? './cypress/support/index.js',
+  )
 
   printCypressJsonHelp(cypressConfigPath, componentFolder)
-  printPluginHelper(userTemplate.pluginsCode, cypressConfigPath, config)
+  printSupportHelper(supportFilePath)
+  printPluginHelper(userTemplate.pluginsCode, pluginsFilePath)
+
+  console.log(
+    `Working example of component tests with ${chalk.green(
+      defaultTemplateName,
+    )}: ${chalk.bold(userTemplate.getExampleUrl({ componentFolder }))}`,
+  )
+
+  console.log(`\nHappy testing with ${chalk.green('cypress.io')} 🔥🔥🔥\n`)
 }
 
 main().catch(e => console.error(e))
