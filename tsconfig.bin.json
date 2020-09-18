@@ -2,7 +2,6 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./bin",
-    "baseUrl": "./init",
     "module": "CommonJS",
     "target": "ES2018",
     "types": ["node"],
