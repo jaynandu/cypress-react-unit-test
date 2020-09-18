@@ -11,6 +11,7 @@
     "build": "npm run transpile",
     "cy:open": "cypress open",
     "transpile": "tsc",
+    "transpile:init": "tsc -p tsconfig.init.json",
     "watch": "tsc -w",
     "pretest": "npm run lint && npm run transpile",
     "lint": "standard --verbose --fix *.js src cypress/integration",
@@ -19,6 +20,9 @@
     "check:links": "find . -type f -name 'README.md' ! -path './node_modules/*' | xargs -L1 npx markdown-link-check --quiet",
     "stop-only": "stop-only --folder cypress",
     "warn-only": "stop-only --warn --folder cypress"
+  },
+  "bin": {
+    "init": "./bin/init.js"
   },
   "husky": {
     "hooks": {
